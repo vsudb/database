@@ -12,7 +12,8 @@
 
 1. Запустите приложение **pgAdmin4**.
 2. Подключитесь к вашему локальному серверу PostgreSQL, используя заданный ранее пароль (`123456`).
-3. Скачайте [pg_migration_study.sql](https://github.com/vsudb/database/blob/main/schema/pg_migration_study.sql) 
+3. Создайте базу данных _Create --> Database..._ **vsudb** _(наименование потребуется для подключения через IDE)_
+4. Скачайте [pg_migration_study.sql](https://github.com/vsudb/database/blob/main/schema/pg_migration_study.sql) 
 - это SQL-скрипт Максима Котельникова из Moodle (раздел «Управление данными»)
 4. Откройте **Query Tool** (Редактор SQL), вставьте содержимое скрипта и выполните его.
 5. После успешного выполнения в базе данных должно появиться **6 таблиц**. Проверить корректность создания можно простым запросом:
