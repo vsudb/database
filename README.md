@@ -1,4 +1,5 @@
-#  Установка и настройка учебной БД PostgreSQL
+#  Установка и настройка учебной БД PostgreSQL 
+##  [DataBase Schema](https://github.com/vsudb/database/blob/main/schema/img_schema_vsudb.png)
 
 ## 1. Локальная установка PostgreSQL и pgAdmin4
 
