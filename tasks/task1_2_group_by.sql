@@ -7,8 +7,122 @@
 --                           HAVING
 --                           ORDER BY ASC, DESC
 --===========================================================================================
+--                           COUNT() COUNT(*) COUNT(DISTINCT ) EXAMPLES
+--===========================================================================================
+
+/*WITH test_data (id, value) AS (
+VALUES (1, 'A'),
+       (2, 'B'),
+       (3, NULL),
+       (4, 'A'),
+       (5, NULL))
+
+SELECT
+	COUNT(*) AS cnt_all,                    -- Результат: 5 (все строки)
+    COUNT(value) AS cnt_val_without_null,   -- Результат: 3 (только не-NULL)
+    COUNT(DISTINCT value) AS cnt_distinct   -- Результат: 2 (A, B)
+FROM test_data;
+
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(city) AS non_null_cities,
+    COUNT(DISTINCT city) AS unique_cities
+FROM student;
+*/
+
+--===========================================================================================
+--                           COUNT(*) AVG() SUM() MIN() MAX() EXAMPLES
+--===========================================================================================
+
+
+/*SELECT student_id, COUNT(DISTINCT subj_id)
+FROM exam_marks
+GROUP BY student_id
+--HAVING COUNT(subj_id) < 3
+ORDER BY COUNT(subj_id) DESC;
+
+
+SELECT
+      COUNT(*)      -- всего_студентов кол-во строк в таблице
+    , SUM(stipend)  -- сумма_стипендий,
+    , AVG(stipend)  -- средняя_стипендия,
+    , MIN(stipend)  -- минимальная,
+    , MAX(stipend)  -- максимальная
+FROM student;
+--WHERE kurs = 4
+
+SELECT
+      kurs
+    , COUNT(*)      AS cnt_students
+    , AVG(stipend)  AS avg_payment
+    , MAX(stipend)  AS max_payment
+	, MIN(stipend)  AS min_payment
+FROM student
+--WHERE stipend BETWEEN 0 AND 150
+--WHERE stipend BETWEEN 151 AND 250
+--WHERE stipend BETWEEN 251 AND 350
+--WHERE stipend > 350
+GROUP BY kurs
+ORDER BY kurs;
+*/
+
+--===========================================================================================
+--                           GROUP BY CASE EXAMPLES (HIGH_LEVEL)
+--
+--                           CASE col
+--	                            WHEN ... THEN
+--	                            WHEN .. THEN
+--	                            ELSE
+--	                         END
+--
+--                           https://postgrespro.ru/docs/postgresql/current/functions-conditional
+--===========================================================================================
+
+/*SELECT
+      CASE
+          WHEN stipend BETWEEN   0 AND 150 THEN '0-150'
+          WHEN stipend BETWEEN 151 AND 250 THEN '151-250'
+          WHEN stipend BETWEEN 251 AND 350 THEN '251-350'
+          WHEN stipend > 350               THEN '350+'
+          ELSE 'нет стипендии / NULL'
+      END                AS stipend_range
+    , COUNT(*)           AS cnt_students
+    , AVG(stipend)       AS avg_payment
+    , MAX(stipend)       AS max_payment
+    , MIN(stipend)       AS min_payment
+FROM student
+GROUP BY
+      CASE
+          WHEN stipend BETWEEN   0 AND 150 THEN '0-150'
+          WHEN stipend BETWEEN 151 AND 250 THEN '151-250'
+          WHEN stipend BETWEEN 251 AND 350 THEN '251-350'
+          WHEN stipend > 350               THEN '350+'
+          ELSE 'нет стипендии / NULL'
+      END
+ORDER BY stipend_range;
+
+SELECT
+      kurs
+    , FLOOR(stipend / 100) * 100                    AS range_start
+    , CONCAT(
+          FLOOR(stipend / 100) * 100, '-',
+          FLOOR(stipend / 100) * 100 + 99
+      )                                             AS stipend_range
+    , COUNT(*)      AS cnt_students
+    , AVG(stipend)  AS avg_payment
+    , MAX(stipend)  AS max_payment
+    , MIN(stipend)  AS min_payment
+FROM student
+WHERE stipend IS NOT NULL
+GROUP BY
+      kurs
+    , FLOOR(stipend / 100) * 100
+ORDER BY kurs, range_start;
+*/
+--===========================================================================================
 
 --1.
+
 --        Напишите запрос для подсчета количества студентов,
 --        сдававших экзамен по предмету обучения с идентификатором 20.
 
