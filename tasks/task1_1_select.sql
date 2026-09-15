@@ -172,7 +172,7 @@ WITH t(s) AS (
 --SELECT s FROM t WHERE s LIKE 'report%';
 --SELECT s FROM t WHERE s LIKE '%2024%';
 --SELECT s FROM t WHERE s LIKE '___';
---SELECT s FROM t WHERE s LIKE  LIKE '%!%%' ESCAPE '!';
+--SELECT s FROM t WHERE s LIKE '%!%%' ESCAPE '!';
 --SELECT s FROM t WHERE s LIKE 'a!!b' ESCAPE '!';
 SELECT s FROM t WHERE s LIKE 'a!_b' ESCAPE '!';
 
