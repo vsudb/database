@@ -193,7 +193,11 @@ SELECT s FROM t WHERE s LIKE 'a!_b' ESCAPE '!';
 --                          SUBSTR() LENGTH()
 --
 --                          https://postgrespro.ru/docs/postgrespro/current/functions-formatting
---                          TIMESTAMP VS DATE: DATE (год, месяц и день), а TIMESTAMP — конкретный момент времени (включая часы, минуты, секунды)
+--
+--                          TIMESTAMP VS DATE:
+--                          DATE        (год, месяц и день),
+--                          TIMESTAMP — конкретный момент времени (включая часы, минуты, секунды)
+--
 --                          TO_CHAR(, 'YYYY-Mon-DD HH:MI.SS')
 --                          TO_DATE('05 Dec 2030', 'DD Mon YYYY')
 --
@@ -259,3 +263,40 @@ SELECT s FROM t WHERE s LIKE 'a!_b' ESCAPE '!';
 --
 --       НО значения рейтинга требуется округлить
 --       до первого знака (например, значение 382 округляется до 400).
+
+--==========================================================================
+--       Вычислите возраст студента
+--       Универсальный шаблон (ANSI SQL)
+--==========================================================================
+--       Операторы и функции даты/времени
+--       https://postgrespro.ru/docs/postgrespro/current/functions-datetime
+--==========================================================================
+/*
+SELECT
+	name
+	, surname
+    -- 1. Вычитаем год рождения из текущего года
+    ,(EXTRACT(YEAR FROM CURRENT_DATE) - EXTRACT(YEAR FROM birthday)) -
+    -- 2. Вычитаем 1 год, если текущий месяц и день меньше месяца и дня рождения
+    (CASE
+        WHEN EXTRACT(MONTH FROM CURRENT_DATE) < EXTRACT(MONTH FROM birthday)
+             OR (EXTRACT(MONTH FROM CURRENT_DATE) = EXTRACT(MONTH FROM birthday)
+                 AND EXTRACT(DAY FROM CURRENT_DATE) < EXTRACT(DAY FROM birthday))
+        THEN 1
+        ELSE 0
+     END) AS age
+FROM student;
+*/
+
+--=========================================================================================================================================================
+--              Если вам не нужно писать один код под все системы сразу,
+--              гораздо эффективнее и быстрее использовать встроенные функции конкретной БД:
+--=========================================================================================================================================================
+-- СУБД        | Оптимальный синтаксис
+--=========================================================================================================================================================
+-- PostgreSQL  |  EXTRACT(YEAR FROM AGE(CURRENT_DATE, birthday))
+-- MySQL       |  TIMESTAMPDIFF(YEAR, birthday, CURDATE())
+-- SQL Server  |  DATEDIFF(year, birthday, GETDATE()) - CASE WHEN DATEADD(year, DATEDIFF(year, birthday, GETDATE()), birthday) > GETDATE() THEN 1 ELSE 0 END;
+-- Oracle      |  TRUNC(MONTHS_BETWEEN(SYSDATE, birthday) / 12)
+-- SQLite      |  (strftime('%Y', 'now') - strftime('%Y', birthday)) - (strftime('%m-%d', 'now') < strftime('%m-%d', birthday))
+--=========================================================================================================================================================
