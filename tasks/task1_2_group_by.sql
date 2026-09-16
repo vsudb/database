@@ -35,7 +35,8 @@ FROM student;
 --===========================================================================================
 
 
-/*SELECT student_id, COUNT(DISTINCT subj_id)
+/*
+SELECT student_id, COUNT(DISTINCT subj_id)
 FROM exam_marks
 GROUP BY student_id
 --HAVING COUNT(subj_id) < 3
@@ -48,6 +49,8 @@ SELECT
     , AVG(stipend)  -- средняя_стипендия,
     , MIN(stipend)  -- минимальная,
     , MAX(stipend)  -- максимальная
+    , MIN(birthday)
+    , MAX(birthday)
 FROM student;
 --WHERE kurs = 4
 
