@@ -1,47 +1,118 @@
 --===========================================================================================
 --                           УПРАЖНЕНИЯ 2_4
 --                           Агрегирование и группировка
---                           COUNT() COUNT(*) COUNT(DISTINCT )
+--                           COUNT(*) COUNT(col_name) COUNT(DISTINCT col_name)
 --                           AVG() SUM() MIN() MAX()
 --                           GROUP BY
 --                           HAVING
 --                           ORDER BY ASC, DESC
 --===========================================================================================
---                           COUNT() COUNT(*) COUNT(DISTINCT ) EXAMPLES
+--                           COUNT(*) COUNT(col_name) COUNT(DISTINCT col_name) EXAMPLES
+--===========================================================================================
+--       COUNT(*)                 - ВСЕ СТРОКИ включая NULL
+--       COUNT(col_name)          - КОЛ-ВО строк без NULL
+--       COUNT(DISTINCT col_name) - УНИКАЛЬНЫЕ СТРОКИ без NULL
 --===========================================================================================
 
-/*WITH test_data (id, value) AS (
+-- 1.
+WITH test_data (id, value) AS (
 VALUES (1, 'A'),
        (2, 'B'),
        (3, NULL),
        (4, 'A'),
        (5, NULL))
-
 SELECT
 	COUNT(*) AS cnt_all,                    -- Результат: 5 (все строки)
     COUNT(value) AS cnt_val_without_null,   -- Результат: 3 (только не-NULL)
     COUNT(DISTINCT value) AS cnt_distinct   -- Результат: 2 (A, B)
 FROM test_data;
 
+-- 2.
 SELECT
-    COUNT(*) AS total_rows,
-    COUNT(city) AS non_null_cities,
+    COUNT(*)             AS total_rows,
+    COUNT(city)          AS non_null_cities,
     COUNT(DISTINCT city) AS unique_cities
 FROM student;
-*/
+
+-- 3.
+SELECT
+    COUNT(*)               AS total_rows,
+    COUNT(kurs)            AS cnt_non_null_kurs,
+    COUNT(DISTINCT kurs)   AS unique_kurs,
+    COUNT(*) - COUNT(kurs) AS diff
+FROM student;
+
 
 --===========================================================================================
 --                           COUNT(*) AVG() SUM() MIN() MAX() EXAMPLES
 --===========================================================================================
+--                                   Агрегирующие функции игнорируют NULL
+--===========================================================================================
+--                                   AVG(COALESCE(stipend, 0))
+--===========================================================================================
+--                                   Что если ВСЕ значения NULL ?
+--===========================================================================================
+
+-- WITH t (x) AS (VALUES (NULL), (NULL), (NULL))
+-- SELECT
+--       COUNT(*)   AS cnt_star,
+--       COUNT(x)   AS cnt_x,
+--       SUM(x)     AS sum_x,
+--       AVG(x)     AS avg_x,
+--       MIN(x)     AS min_x,
+--       MAX(x)     AS max_x
+-- FROM t;
+--===========================================================================================
 
 
-/*
-SELECT student_id, COUNT(DISTINCT subj_id)
-FROM exam_marks
-GROUP BY student_id
---HAVING COUNT(subj_id) < 3
-ORDER BY COUNT(subj_id) DESC;
+WITH student (student_id, surname, name, stipend, kurs, city, birthday, univ_id) AS (
+    VALUES
+        (1, 'Иванов',    'Пётр',    1500, 1, 'Москва',          DATE '2005-03-12', 10),
+        (2, 'Петрова',   'Анна',    2000, 1, 'Москва',          DATE '2005-07-01', 10),
+        (3, 'Сидоров',   'Олег',    0,    1, 'Казань',          DATE '2005-01-20', 11),
+        (4, 'Кузнецова', 'Мария',   1800, 2, 'Москва',          DATE '2004-09-15', 10),
+        (5, 'Смирнов',   'Игорь',   2200, 2, 'Санкт-Петербург', DATE '2004-11-30', 12),
+        (6, 'Попова',    'Елена',   1500, 3, 'Казань',          DATE '2003-05-05', 11),
+        (7, 'Волков',    'Дмитрий', 2500, 3, 'Москва',          DATE '2003-08-22', 10),
+        (8, 'Морозова',  'Ольга',   0,    4, 'Санкт-Петербург', DATE '2002-12-10', 12)
+)
+SELECT kurs
+     , univ_id
+     , COUNT(*)      -- всего_студентов кол-во строк в таблице
+     , SUM(stipend)  -- сумма_стипендий,
+     , AVG(stipend)  -- средняя_стипендия,
+FROM student
+--GROUP BY kurs
+--ORDER BY kurs;
+GROUP BY univ_id, kurs
+ORDER BY univ_id, kurs;
 
+--===========================================================================================
+--  Почему нельзя вывести surname без агрегата?
+--===========================================================================================
+-- SELECT kurs, surname, COUNT(*)
+-- FROM student
+-- GROUP BY kurs;
+--===========================================================================================
+-- В корзине kurs = 1 лежат три фамилии: Иванов, Петрова, Сидоров.
+-- Если корзина сворачивается в одну строку, то какую из трёх фамилий показать?
+-- Движок SQL не знает — и СУБД выдаст ошибку:
+--===========================================================================================
+
+--В SELECT после GROUP BY можно писать только:
+--1) столбцы, перечисленные в GROUP BY;
+--2) агрегатные функции над остальными столбцами.
+
+
+--Группироваться можно по одному полю, можно по несколькольким
+--SELECT univ_id, AVG(stipend) AS avg_stipend
+--FROM student
+--GROUP BY univ_id;
+
+--Наложение фильтра на агрегированное значение/группу.
+SELECT univ_id, kurs, AVG(stipend), COUNT(student_id)
+FROM student
+GROUP BY univ_id, kurs;
 
 SELECT
       COUNT(*)      -- всего_студентов кол-во строк в таблице
@@ -55,7 +126,8 @@ FROM student;
 --WHERE kurs = 4
 
 SELECT
-      kurs
+	univ_id
+    , kurs
     , COUNT(*)      AS cnt_students
     , AVG(stipend)  AS avg_payment
     , MAX(stipend)  AS max_payment
@@ -65,10 +137,89 @@ FROM student
 --WHERE stipend BETWEEN 151 AND 250
 --WHERE stipend BETWEEN 251 AND 350
 --WHERE stipend > 350
-GROUP BY kurs
-ORDER BY kurs;
-*/
+GROUP BY univ_id, kurs;
 
+SELECT 1, 2, 3
+UNION ALL
+--UNION
+SELECT 1, 2, 3;
+--Посчитай количество студентов в каждом городе.
+--Найди среднюю стипендию по каждому университету (univ_id), отсортировав по убыванию средней.
+
+--===========================================================================================
+-- Варианты группировок
+--===========================================================================================
+
+-- 1) по полю и нескольким полям(колонкам)
+-- 2) по функциям даты
+-- 3) по строковым функциям
+-- 4) по результатам математических операций / по диапазонам значений
+-- 5) по CASE выражениям
+--===========================================================================================
+--
+-- Варианты группировок 2) по функциям даты
+--===========================================================================================
+--Количество экзаменов по месяцам
+
+SELECT
+	EXTRACT(YEAR FROM exam_date) AS exam_year,
+    EXTRACT(MONTH FROM exam_date) AS exam_month,
+    COUNT(*) AS exams_count,
+    AVG(mark) AS avg_mark
+FROM exam_marks
+WHERE exam_date IS NOT NULL
+GROUP BY EXTRACT(YEAR FROM exam_date), EXTRACT(MONTH FROM exam_date)
+ORDER BY exam_year, exam_month;
+
+--===========================================================================================
+--
+-- Варианты группировок 3) по строковым функциям
+--===========================================================================================
+WITH users(id, name, email) AS (
+    VALUES
+    (1, 'Иван Иванов', 'ivan@gmail.com'),
+    (2, 'Петр Петров', 'petr@yandex.ru'),
+    (3, 'Анна Сидорова', 'anna@mail.ru'),
+    (4, 'Мария Кузнецова', 'maria@gmail.com'),
+    (5, 'Алексей Смирнов', 'alex@yandex.ru'),
+    (6, 'Елена Волкова', 'elena@yahoo.com'),
+    (7, 'Дмитрий Новиков', 'dmitry@mail.ru'),
+    (8, 'Ольга Морозова', 'olga@gmail.com'),
+    (9, 'Сергей Васильев', 'sergey@yandex.ru'),
+    (10, 'Наталья Павлова', 'nataly@mail.ru')
+)
+SELECT
+    SUBSTRING(email, POSITION('@' IN email) + 1) AS email_domain,
+    COUNT(*) AS users_count
+FROM users
+GROUP BY email_domain
+ORDER BY users_count DESC;
+
+--===========================================================================================
+--
+-- Варианты группировок 4) по результатам математических операций / по диапазонам значений
+--===========================================================================================
+SELECT
+      kurs
+    , FLOOR(stipend / 100) * 100                    AS range_start
+    , CONCAT(
+          FLOOR(stipend / 100) * 100, '-',
+          FLOOR(stipend / 100) * 100 + 99
+      )                                             AS stipend_range
+    , COUNT(*)      AS cnt_students
+    , AVG(stipend)  AS avg_payment
+    , MAX(stipend)  AS max_payment
+    , MIN(stipend)  AS min_payment
+FROM student
+WHERE stipend IS NOT NULL
+GROUP BY
+      kurs
+    , FLOOR(stipend / 100) * 100
+ORDER BY kurs, range_start;
+
+--===========================================================================================
+--
+-- Варианты группировок 5) по CASE выражениям
 --===========================================================================================
 --                           GROUP BY CASE EXAMPLES (HIGH_LEVEL)
 --
@@ -81,7 +232,7 @@ ORDER BY kurs;
 --                           https://postgrespro.ru/docs/postgresql/current/functions-conditional
 --===========================================================================================
 
-/*SELECT
+SELECT
       CASE
           WHEN stipend BETWEEN   0 AND 150 THEN '0-150'
           WHEN stipend BETWEEN 151 AND 250 THEN '151-250'
@@ -104,24 +255,8 @@ GROUP BY
       END
 ORDER BY stipend_range;
 
-SELECT
-      kurs
-    , FLOOR(stipend / 100) * 100                    AS range_start
-    , CONCAT(
-          FLOOR(stipend / 100) * 100, '-',
-          FLOOR(stipend / 100) * 100 + 99
-      )                                             AS stipend_range
-    , COUNT(*)      AS cnt_students
-    , AVG(stipend)  AS avg_payment
-    , MAX(stipend)  AS max_payment
-    , MIN(stipend)  AS min_payment
-FROM student
-WHERE stipend IS NOT NULL
-GROUP BY
-      kurs
-    , FLOOR(stipend / 100) * 100
-ORDER BY kurs, range_start;
-*/
+-- PIVOT
+
 --===========================================================================================
 
 --1.
@@ -143,7 +278,7 @@ ORDER BY kurs, range_start;
 --        выполняет выборку его идентификатора и
 --        максимальной из полученных им оценок.
 
---5.
+--5. ?
 --        Напишите запрос, выполняющий вывод
 --        первой по алфавиту фамилии студента,
 --        начинающейся на букву 'И'.
