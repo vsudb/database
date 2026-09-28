@@ -228,9 +228,9 @@ FROM student;
 SELECT
 	univ_id
     , kurs
-    , AVG(stipend)  AS avg_payment
-	, AVG(COALESCE(stipend, 0))
-    FROM student
+    , AVG(stipend)              AS avg_payment
+	, AVG(COALESCE(stipend, 0)) AS avg_include_null_values
+FROM student
 GROUP BY univ_id, kurs
 HAVING AVG(stipend) != AVG(COALESCE(stipend, 0))
 ORDER BY univ_id, kurs;
