@@ -199,7 +199,7 @@ WHERE stipend_excess > 0;
 
  Строки «схлопываются» 
 ```sql
-SELECT univ_id, AVG(stipend) AS avg_stipend 
+SELECT univ_id, AVG(stipend)
 FROM student 
 GROUP BY univ_id;
 ```
