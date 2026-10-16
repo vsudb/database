@@ -45,33 +45,7 @@
 
 ## 💡 Примеры подзапросов
 
-### 🔹 Связанный скалярный подзапрос в `SELECT`
-
-**Задача:** Вывести фамилию, имя студента и количество студентов, обучающихся в его университете.
-
-```sql
-SELECT surname, name,
-       (SELECT COUNT(*) FROM student s2
-        WHERE s1.univ_id = s2.univ_id) AS cnt_students
-FROM student s1;
-```
-
-**Альтернатива через JOIN:**
-
-```sql
-SELECT surname, name, s2.cnt
-FROM student s1
-INNER JOIN (
-    SELECT univ_id, COUNT(student_id) AS cnt
-    FROM student
-    GROUP BY univ_id
-) s2 ON s1.univ_id = s2.univ_id;
-```
-
----
-
-### 🔹 Скалярный подзапрос в `WHERE`
-
+## 🔹 Скалярный подзапрос в WHERE
 **Задача:** Найти студентов, получающих стипендию выше средней среди всех студентов.
 
 ```sql
@@ -84,8 +58,70 @@ WHERE stipend > (
 
 ---
 
-### 🔹 Связанный скалярный подзапрос в `WHERE`
+### Задача 1.1: Прочитать план выполнения
+Даны два запроса. С помощью `EXPLAIN ANALYZE` определите, какой из них эффективнее и почему.
 
+#### Запрос A (Подзапрос с оператором IN)
+```sql
+SELECT s.surname, s.name
+FROM student s
+WHERE s.univ_id IN (SELECT univ_id FROM university WHERE rating > 200);
+```
+
+#### Запрос B (Явное соединение JOIN)
+```sql
+SELECT s.surname, s.name
+FROM student s
+JOIN university u ON u.univ_id = s.univ_id
+WHERE u.rating > 200;
+```
+
+#### Что нужно сделать:
+Выполнить анализ планов выполнения для обоих вариантов:
+```sql
+EXPLAIN ANALYZE
+SELECT s.surname, s.name
+FROM student s
+WHERE s.univ_id IN (SELECT univ_id FROM university WHERE rating > 200);
+
+EXPLAIN ANALYZE
+SELECT s.surname, s.name
+FROM student s
+JOIN university u ON u.univ_id = s.univ_id
+WHERE u.rating > 200;
+```
+
+#### Ожидаемый вывод и анализ:
+* **Интерпретация Запроса A:** `IN` с подзапросом в современных СУБД часто оптимизируется и превращается в `SEMI JOIN` или `HASH JOIN`. Это крайне эффективно, если подзапрос возвращает небольшое количество строк.
+* **Интерпретация Запроса B:** Явный `JOIN` обычно дает стабильный и предсказуемый план с использованием `HASH JOIN` или `NESTED LOOP`.
+* **Резюме:** Если подзапрос возвращает очень много строк, классический `JOIN` часто оказывается предпочтительнее и стабильнее по производительности.
+
+---
+
+## 🔹 Связанный скалярный подзапрос в SELECT
+**Задача:** Вывести фамилию, имя студента и количество студентов, обучающихся в его университете.
+
+```sql
+SELECT surname, name,
+       (SELECT COUNT(*) FROM student s2
+        WHERE s1.univ_id = s2.univ_id) AS cnt_students
+FROM student s1;
+```
+
+#### Альтернатива через JOIN:
+```sql
+SELECT surname, name, s2.cnt
+FROM student s1
+INNER JOIN (
+    SELECT univ_id, COUNT(student_id) AS cnt
+    FROM student
+    GROUP BY univ_id
+) s2 ON s1.univ_id = s2.univ_id;
+```
+
+---
+
+## 🔹 Связанный скалярный подзапрос в WHERE
 **Задача:** Найти студентов, получающих стипендию выше средней в их университете.
 
 ```sql
@@ -97,8 +133,7 @@ WHERE stipend > (
 );
 ```
 
-**Альтернатива через JOIN:**
-
+#### Альтернатива через JOIN:
 ```sql
 SELECT surname, name, s1.stipend, s2.avg_stipend
 FROM student s1
@@ -107,6 +142,44 @@ INNER JOIN (
     FROM student
     GROUP BY univ_id
 ) s2 ON s1.univ_id = s2.univ_id AND s1.stipend > s2.avg_stipend;
+```
+
+---
+
+## 🔹 Практическое задание
+**Задача:** Найти студентов, получающих стипендию выше средней стипендии в их университете, и показать размер этого превышения.
+
+#### Решение через связанный подзапрос (Correlated Subquery):
+```sql
+SELECT 
+    surname, 
+    name, 
+    stipend,
+    stipend - (
+        SELECT AVG(stipend) 
+        FROM student s2 
+        WHERE s1.univ_id = s2.univ_id
+    ) AS stipend_excess
+FROM student s1
+WHERE stipend > (
+    SELECT AVG(stipend) 
+    FROM student s2 
+    WHERE s1.univ_id = s2.univ_id
+);
+```
+
+#### Решение через оконные функции (Window Functions) — наиболее эффективный способ:
+```sql
+SELECT surname, name, stipend, stipend_excess
+FROM (
+    SELECT 
+        surname, 
+        name, 
+        stipend,
+        stipend - AVG(stipend) OVER(PARTITION BY univ_id) AS stipend_excess
+    FROM student
+) sub
+WHERE stipend_excess > 0;
 ```
 
 ---
